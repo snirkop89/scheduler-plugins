@@ -24,6 +24,19 @@ import (
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
+// ZoneResourceArgs defines the parameters for ZoneResource plugin.
+type ZoneResourceArgs struct {
+	metav1.TypeMeta
+
+	// ResourceName is the name of the resource to
+	// make the calculations in a zone
+	ResourceName string
+	// ZoneLabel is the label on the zones that identifies the zone they belong to
+	ZoneLabel string
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
 // CoschedulingArgs defines the parameters for Coscheduling plugin.
 type CoschedulingArgs struct {
 	metav1.TypeMeta

@@ -18,8 +18,8 @@ BUILDENVVAR=CGO_ENABLED=0
 INTEGTESTENVVAR=SCHED_PLUGINS_TEST_VERBOSE=1
 
 LOCAL_REGISTRY=localhost:5000/scheduler-plugins
-LOCAL_IMAGE=kube-scheduler:latest
-LOCAL_CONTROLLER_IMAGE=controller:latest
+LOCAL_IMAGE=kube-scheduler:v0.1.0
+LOCAL_CONTROLLER_IMAGE=controller:v0.1.0
 
 # RELEASE_REGISTRY is the container registry to push
 # into. The default is to push to the staging
@@ -74,8 +74,8 @@ build-scheduler.arm64v8:
 
 .PHONY: local-image
 local-image: clean
-	docker build -f ./build/scheduler/Dockerfile --build-arg ARCH="amd64" --build-arg RELEASE_VERSION="$(RELEASE_VERSION)" -t $(LOCAL_REGISTRY)/$(LOCAL_IMAGE) .
-	docker build -f ./build/controller/Dockerfile --build-arg ARCH="amd64" -t $(LOCAL_REGISTRY)/$(LOCAL_CONTROLLER_IMAGE) .
+	docker build -f ./build/scheduler/Dockerfile --build-arg ARCH="amd64" --build-arg RELEASE_VERSION="v20201009-v0.18.800-46-g939c1c0" -t $(LOCAL_IMAGE) .
+	docker build -f ./build/controller/Dockerfile --build-arg ARCH="amd64" -t $(LOCAL_CONTROLLER_IMAGE) .
 
 .PHONY: release-image.amd64
 release-image.amd64: clean
@@ -128,3 +128,22 @@ verify:
 .PHONY: clean
 clean:
 	rm -rf ./bin
+
+.PHONY: kind-load
+kind-load: local-image
+	kind load docker-image $(LOCAL_CONTROLLER_IMAGE) --nodes multi-control-plane,multi-worker,multi-worker2,multi-worker3 --name multi
+	kind load docker-image $(LOCAL_IMAGE) --nodes multi-control-plane,multi-worker,multi-worker2,multi-worker3 --name multi
+
+.PHONY: kind-down
+kind-down:
+	kind delete cluster --name multi
+
+.PHONY: kind-up
+kind-up:
+	kind create cluster --name multi --config ~/kind-config.yaml
+
+
+.PHONY: helm-install
+helm-install:
+	@cd manifests/install/charts/ && helm install scheduler-plugins as-a-second-scheduler/
+
